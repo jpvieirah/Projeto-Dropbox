@@ -9,7 +9,25 @@ class DropBoxController {
         this.namefileEl = this.snackModalEl.querySelector('.filename');
         this.timeleftEl = this.snackModalEl.querySelector('.timeleft');
 
+        this.connectFirebase();
         this.initEvents();
+
+    }
+
+    connectFirebase(){
+
+        var config = {
+            apiKey: "AIzaSyBuH6lziY_KVG_vgaNVJ2ZvjMY-vcFiFvY",
+            authDomain: "dropbox-clone-af9a6.firebaseapp.com",
+            databaseURL: "https://dropbox-clone-af9a6-default-rtdb.firebaseio.com",
+            projectId: "dropbox-clone-af9a6",
+            storageBucket: "dropbox-clone-af9a6.appspot.com",
+            messagingSenderId: "833172425125",
+            appId: "1:833172425125:web:b5d9dadabd809bbe07c04c"
+          };
+        
+          
+          firebase.initializeApp(config);
 
     }
 
@@ -21,15 +39,48 @@ class DropBoxController {
 
         });
 
-        this.inputFilesEl.addEventListener('change', event =>{
+             this.inputFilesEl.addEventListener('change', event =>{
 
-            this.uploadTask(event.target.files);
+                this.btnSendFileEl.disabled = true;
+                
+                this.uploadTask(event.target.files).then(responses => {        
+
+                responses.forEach(resp =>{
+
+                    this.getFirebaseRef().push().set(resp.files['input-file']);
+
+                });
+
+                this.uploadComplete();
+
+            }).catch (err =>{
+
+                this.uploadComplete();
+                console.error(err);
+
+            });
 
             this.modalShow();
 
-            this.inputFilesEl.value = '';
+           
            
         });
+
+    }
+
+    uploadComplete(){
+
+        this.modalShow(false);
+
+        this.inputFilesEl.value = '';
+
+        this.btnSendFileEl.disabled = false;
+
+    }
+
+    getFirebaseRef(){
+
+        return firebase.database().ref('files');
 
     }
 
@@ -52,8 +103,6 @@ class DropBoxController {
             ajax.open('POST', '/upload');
 
             ajax.onload = event => {
-
-                this.modalShow(false);
                 
                 try{
 
@@ -68,9 +117,7 @@ class DropBoxController {
             };
 
             ajax.onerror = event => {
-
-                this.modalShow(false);
-               
+                
                 reject(event);
 
             };
